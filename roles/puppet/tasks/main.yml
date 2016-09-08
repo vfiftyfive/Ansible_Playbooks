@@ -2,7 +2,7 @@
 
   - name: Install gems (global)
     gem:
-      name: {{ item }}
+      name: "{{ item }}"
       state: present
       user_install: yes
       build_flags: "--no-ri --no-rdoc"
