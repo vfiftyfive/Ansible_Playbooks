@@ -1,0 +1,6 @@
+---
+  apic_pass: C!5co123
+  apic_ip: 10.52.249.199
+  node_name: nv-apic-01.uktme.cisco.com
+  server_hostname: nvermand-puppet-master
+  domain_name: uktme.cisco.com

@@ -1,0 +1,48 @@
+node '{{ node_name }}' {
+        apic { 'SomeAPICConfig' :
+                address => 'https://{{ apic_ip }}',
+                user => 'admin',
+                password => '{{ apic_pass }}',
+                config_type => 'hash',
+                config => {
+                        'polUni' => {
+                                'children' => [
+                                        {
+                                                'fvTenant' => {
+                                                        'attributes' => {
+                                                                'name' => 'test2',
+                                                        },
+                                                        'children' => [
+                                                                {
+                                                                        'fvBD' => {
+                                                                                'attributes' => {
+                                                                                        'name' => 'BD1'
+                                                                                }
+                                                                        },
+                                                                },
+                                                                {
+                                                                        'fvAp' => {
+                                                                                'attributes' => {
+                                                                                        'name' => 'WebApplication',
+                                                                                },
+                                                                                'children' => [
+                                                                                        {
+                                                                                                'fvAEPg' => {
+                                                                                                        'attributes' => {
+                                                                                                                'name' => 'WebTier',
+                                                                                                        }
+                                                                                                }
+                                                                                        }
+                                                                                ]
+                                                                        }
+                                                                }
+                                                        ]
+                                                }
+                                        }
+                                ]
+                        }
+                },
+                ensure => 'present',
+        }
+
+}

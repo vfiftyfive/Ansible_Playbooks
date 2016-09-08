@@ -1,0 +1,75 @@
+---
+
+  - name: Install gems (global)
+    gem:
+      name: {{ item }}
+      state: present
+      user_install: yes
+      build_flags: "--no-ri --no-rdoc"
+    with_items:
+      - acirb
+      - nokogiri
+    become: no
+
+  - name: Download Acirb
+    get_url:
+      url: https://github.com/datacenter/acirb/archive/master.zip
+      dest: /tmp/acirb.zip
+      use_proxy: yes
+      validate_certs: no
+
+  - name: Unzip Acirb
+    unarchive: src=/tmp/acirb.zip dest=/tmp copy=no
+
+  - name: Download Puppet Collection
+    get_url:
+      url: https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm
+      dest: /tmp/puppetlabs-release-pc1-el-7.noarch.rpm
+      use_proxy: yes
+      validate_certs: no
+
+  - name: Install Puppet Collection
+    yum: name=/tmp/puppetlabs-release-pc1-el-7.noarch.rpm state=present
+
+  - name: Install Puppet server
+    yum: name=puppetserver state=present
+
+  # - name: Ensure Puppet Server is up
+  #   service: name=puppetserver state=started
+
+  - name: Install Acirb from Puppet gem binaries
+    gem: executable=/opt/puppetlabs/puppet/bin/gem name=acirb build_flags="--no-rdoc --no-ri"
+
+  - name: Install Acirb from Puppet command
+    command: /opt/puppetlabs/bin/puppetserver gem install --local /tmp/acirb-master/gems/acirb-1.2.2.H.gem --no-rdoc --no-ri
+
+  - name: Download APIC Puppet module
+    get_url:
+      url: https://github.com/cgascoig/puppet-aci/archive/master.zip
+      dest: /tmp/puppet-aci.zip
+      use_proxy: yes
+      validate_certs: no
+
+  - name: Unzip APIC Puppet module
+    unarchive: src=/tmp/puppet-aci.zip dest=/tmp copy=no
+
+  - name: Create folder structure
+    file: path={{ item }} state=directory recurse=yes
+    with_items:
+     - ~/.puppet/
+     - ~/.puppet/manifests
+
+  - name: Configure device.conf
+    template: src=device.conf.j2 dest=~/.puppet/device.conf
+
+  - name: Configure site.pp
+    template: src=site.pp.j2 dest=~/.puppet/manifests/site.pp
+
+  - name: Configure /etc/hosts
+    template: src=hosts.j2 dest=/etc/hosts
+
+  - name: Install ACI Puppet module
+    shell: ./build.sh chdir=/tmp/puppet-aci-master
+
+  - name: chown to puppet for puppetlabs directory
+    file: path=/opt/puppetlabs state=directory recurse=yes owner=puppet group=puppet
