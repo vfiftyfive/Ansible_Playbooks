@@ -1,48 +1,18 @@
-node '{{ node_name }}' {
-        apic { 'SomeAPICConfig' :
-                address => 'https://{{ apic_ip }}',
-                user => 'admin',
-                password => '{{ apic_pass }}',
-                config_type => 'hash',
-                config => {
-                        'polUni' => {
-                                'children' => [
-                                        {
-                                                'fvTenant' => {
-                                                        'attributes' => {
-                                                                'name' => 'test2',
-                                                        },
-                                                        'children' => [
-                                                                {
-                                                                        'fvBD' => {
-                                                                                'attributes' => {
-                                                                                        'name' => 'BD1'
-                                                                                }
-                                                                        },
-                                                                },
-                                                                {
-                                                                        'fvAp' => {
-                                                                                'attributes' => {
-                                                                                        'name' => 'WebApplication',
-                                                                                },
-                                                                                'children' => [
-                                                                                        {
-                                                                                                'fvAEPg' => {
-                                                                                                        'attributes' => {
-                                                                                                                'name' => 'WebTier',
-                                                                                                        }
-                                                                                                }
-                                                                                        }
-                                                                                ]
-                                                                        }
-                                                                }
-                                                        ]
-                                                }
-                                        }
-                                ]
-                        }
-                },
-                ensure => 'present',
-        }
-
+node 'nv-apic-01.uktme.cisco.com' {
+  apic { 'SomeAPICConfig' :
+      address => 'nv-apic-01.uktme.cisco.com',
+      user => 'admin',
+      password => 'C!5co123',
+      config_type => 'hash',
+      config => {
+        'fvAp' => {
+          'attributes' => {
+            'descr'     => 'My 3-tier app',
+            'dn'        => 'uni/tn-puppet-tenant/ap-three-tier-app',
+            'name'      => 'three-tier-app',
+            }
+          }
+      },
+      ensure => 'present',
+  }
 }

@@ -34,8 +34,8 @@
   - name: Install Puppet server
     yum: name=puppetserver state=present
 
-  # - name: Ensure Puppet Server is up
-  #   service: name=puppetserver state=started
+  - name: Ensure Puppet Server is up
+    service: name=puppetserver state=started
 
   - name: Install Acirb from Puppet gem binaries
     gem: executable=/opt/puppetlabs/puppet/bin/gem name=acirb build_flags="--no-rdoc --no-ri"
@@ -54,19 +54,26 @@
     unarchive: src=/tmp/puppet-aci.zip dest=/tmp copy=no
 
   - name: Create folder structure
-    file: path={{ item }} state=directory recurse=yes
-    with_items:
-     - ~/.puppet/
-     - ~/.puppet/manifests
+    file: path=~/.puppet/ state=directory recurse=yes
 
   - name: Configure device.conf
     template: src=device.conf.j2 dest=~/.puppet/device.conf
 
   - name: Configure site.pp
-    template: src=site.pp.j2 dest=~/.puppet/manifests/site.pp
+    template:
+      src: site.pp.j2
+      dest: /etc/puppetlabs/code/environments/production/manifests/site.pp
 
   - name: Configure /etc/hosts
     template: src=hosts.j2 dest=/etc/hosts
 
+  - name: Configure puppet.conf
+    template: src=puppet.conf.j2 dest=/etc/puppetlabs/puppet/puppet.conf
+
   - name: Install ACI Puppet module
     shell: ./build.sh chdir=/tmp/puppet-aci-master
+
+  - name: Generate CA CSR
+    command: "{{ item }}"
+    with_items:
+      - /opt/puppetlabs/bin/puppet cert list -a
