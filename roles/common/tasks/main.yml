@@ -10,14 +10,14 @@
     tags:
       - configuration
 
-  - name: Install packages
+  - name: Install common packages
     yum: name={{ item }} state=present
     with_items:
       - unzip
-      - ruby
-      - ruby-devel
-      - zlib-devel
       - ntp
+      - wget
+    tags:
+      - configuration
 
   - name: Ensure ntpd is up
     service: name=ntpd enabled=yes state=started

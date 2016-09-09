@@ -1,5 +1,12 @@
 ---
 
+  - name: Install specific packages
+    yum: name={{ item }} state=present
+    with_items:
+      - ruby
+      - ruby-devel
+      - zlib-devel
+
   - name: Install gems (global)
     gem:
       name: "{{ item }}"
@@ -30,12 +37,11 @@
 
   - name: Install Puppet Collection
     yum: name=/tmp/puppetlabs-release-pc1-el-7.noarch.rpm state=present
+    become: no
 
   - name: Install Puppet server
     yum: name=puppetserver state=present
-
-  - name: Ensure Puppet Server is up
-    service: name=puppetserver state=started
+    become: no
 
   - name: Install Acirb from Puppet gem binaries
     gem: executable=/opt/puppetlabs/puppet/bin/gem name=acirb build_flags="--no-rdoc --no-ri"
@@ -64,11 +70,14 @@
       src: site.pp.j2
       dest: /etc/puppetlabs/code/environments/production/manifests/site.pp
 
+  - name: Configure puppet.conf
+    template: src=puppet.conf.j2 dest=/etc/puppetlabs/puppet/puppet.conf
+
   - name: Configure /etc/hosts
     template: src=hosts.j2 dest=/etc/hosts
 
-  - name: Configure puppet.conf
-    template: src=puppet.conf.j2 dest=/etc/puppetlabs/puppet/puppet.conf
+  - name: Ensure Puppet Server is up
+    service: name=puppetserver state=started
 
   - name: Install ACI Puppet module
     shell: ./build.sh chdir=/tmp/puppet-aci-master
@@ -77,3 +86,6 @@
     command: "{{ item }}"
     with_items:
       - /opt/puppetlabs/bin/puppet cert list -a
+
+  - name: Add puppet device script
+    template: src=puppetdevice.sh.j2 dest=/home/nvermand/puppetdevice.sh mode=a+x
