@@ -2,7 +2,7 @@
 
   - name: Install gems (global)
     gem:
-      name: "{{ item }}"
+      name: {{ item }}
       state: present
       user_install: yes
       build_flags: "--no-ri --no-rdoc"
@@ -70,6 +70,3 @@
 
   - name: Install ACI Puppet module
     shell: ./build.sh chdir=/tmp/puppet-aci-master
-
-  - name: chown to puppet for puppetlabs directory
-    file: path=/opt/puppetlabs state=directory recurse=yes owner=puppet group=puppet
