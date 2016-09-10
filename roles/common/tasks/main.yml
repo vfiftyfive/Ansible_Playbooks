@@ -16,6 +16,7 @@
       - unzip
       - ntp
       - wget
+      - git
     tags:
       - configuration
 

@@ -37,11 +37,10 @@
 
   - name: Install Puppet Collection
     yum: name=/tmp/puppetlabs-release-pc1-el-7.noarch.rpm state=present
-    become: no
+
 
   - name: Install Puppet server
     yum: name=puppetserver state=present
-    become: no
 
   - name: Install Acirb from Puppet gem binaries
     gem: executable=/opt/puppetlabs/puppet/bin/gem name=acirb build_flags="--no-rdoc --no-ri"
@@ -77,7 +76,7 @@
     template: src=hosts.j2 dest=/etc/hosts
 
   - name: Ensure Puppet Server is up
-    service: name=puppetserver state=started
+    service: name=puppetserver state=started enabled=yes
 
   - name: Install ACI Puppet module
     shell: ./build.sh chdir=/tmp/puppet-aci-master
@@ -89,3 +88,4 @@
 
   - name: Add puppet device script
     template: src=puppetdevice.sh.j2 dest=/home/nvermand/puppetdevice.sh mode=a+x
+    become: no

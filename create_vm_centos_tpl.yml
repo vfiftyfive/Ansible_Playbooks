@@ -1,0 +1,19 @@
+---
+  - hosts: localhost
+
+    tasks:
+    - name: Generate VM name
+      local_action: command /home/nvermand/random_name.sh
+      register: vm_name
+
+    - name: Create VM from template
+      vsphere_guest:
+        vcenter_hostname: "{{ vcenter_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        guest: vm_name
+        from_template: yes
+        template_src: nvermand-centos-7-tpl
+        cluster: pod-02
+        resource_pool: "/Resources"
+        vm_extra_config: "Created by Ansible"
