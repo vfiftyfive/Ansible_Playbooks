@@ -1,30 +1,28 @@
 ---
-  - hosts: localhost
 
-    tasks:
     - name: Generate VM name
       local_action: shell /usr/bin/openssl rand -hex 5
-      with_sequence: count=3
+      with_sequence: count=2
       register: vm_name
 
-    - name: Create VM App
+    - name: Create VM Webapp
       vsphere_guest:
-        vcenter_hostname: "{{ vcenter_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        vcenter_hostname: nvermand-vc-01.uktme.cisco.com
+        username: root
+        password: C!5co123
         guest: "{{ vm_name.results[0].stdout }}"
         from_template: yes
         template_src: nvermand-centos-7-tpl
-        cluster: pod-02
+        cluster: pod-03
         resource_pool: "/Resources"
         vm_extra_config:
           notes: "VM App Created by Ansible"
 
     - name: Create VM DB
       vsphere_guest:
-        vcenter_hostname: "{{ vcenter_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        vcenter_hostname: nvermand-vc-01.uktme.cisco.com
+        username: root
+        password: C!5co123
         guest: "{{ vm_name.results[1].stdout }}"
         from_template: yes
         template_src: nvermand-centos-7-tpl
@@ -32,16 +30,3 @@
         resource_pool: "/Resources"
         vm_extra_config:
           notes: "VM DB Created by Ansible"
-
-    - name: Create VM Web
-      vsphere_guest:
-        vcenter_hostname: "{{ vcenter_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
-        guest: "{{ vm_name.results[2].stdout }}"
-        from_template: yes
-        template_src: nvermand-centos-7-tpl
-        cluster: pod-02
-        resource_pool: "/Resources"
-        vm_extra_config:
-          notes: "VM Web Created by Ansible"

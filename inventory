@@ -1,4 +1,4 @@
-localhost ansible_connection=local
+localhost
 
 [puppet_server]
 nvermand-puppet-master

@@ -1,0 +1,9 @@
+---
+
+  ansible_connection: local
+  username: admin
+  password: C!5co123
+  apic: 10.52.249.199
+  vc_host: nvermand-vc-01.uktme.cisco.com
+  vc_user: root
+  vc_password: C1sco123
