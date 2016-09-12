@@ -26,7 +26,7 @@
         guest: "{{ vm_name.results[1].stdout }}"
         from_template: yes
         template_src: nvermand-centos-7-tpl
-        cluster: pod-02
+        cluster: pod-03
         resource_pool: "/Resources"
         vm_extra_config:
           notes: "VM DB Created by Ansible"
