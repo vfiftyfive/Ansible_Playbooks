@@ -1,7 +1,0 @@
-localhost
-
-[puppet_server]
-nvermand-puppet-master
-
-[jenkins]
-nvermand-jenkins
