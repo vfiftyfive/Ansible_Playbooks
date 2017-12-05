@@ -8,7 +8,6 @@
         username: '{{ aci_username }}'
         password: '{{ aci_password }}'
         validate_certs: no
-        use_ssl: no
         use_proxy: no
       post_to_uni: &post_to_uni
         method: post
@@ -58,7 +57,7 @@
         src: "{{ item }}"
       delegate_to: localhost
       with_items: "{{ vlan_pool_list }}"
-      async: 2
+      async: 1
       poll: 1
     - name: Deploy Domains
       aci_rest:
@@ -73,7 +72,57 @@
         <<: *post_to_uni
         src: /home/nvermand/lab/fabric1/vpc-protpol.json
       delegate_to: localhost
-    
-
-
-
+    - name: Create Interface Policies
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: /home/nvermand/lab/fabric1/Ifpolicies.json
+      delegate_to: localhost    
+    - name: Create VMM Domains
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}"
+      delegate_to: localhost
+      with_items: "{{ vmm_list }}"
+      async: 2
+      poll: 1
+    - name: Create AAEPs
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}" 
+      delegate_to: localhost	
+      with_items: "{{ AEP_list }}"
+      async: 2
+      poll: 1
+    - name: Deploy Interface Policy Groups
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}"
+      delegate_to: localhost
+      with_items: "{{ int_pol_grp_list }}"
+    - name: Deploy Interface Profile Policy
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}"
+      delegate_to: localhost
+      with_items: "{{ int_prof_list }}"
+    - name: Deploy Node Profile Policy
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}"
+      delegate_to: localhost
+      with_items: "{{ node_prof_list }}"
+      async: 2
+      poll: 1
+    - name: Deploy Tenant Policy
+      aci_rest:
+        <<: *aci_login
+        <<: *post_to_uni
+        src: "{{ item }}"
+      delegate_to: localhost
+      with_items: "{{ tenant_list }}"
