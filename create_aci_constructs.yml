@@ -1,0 +1,156 @@
+---
+  - hosts: localhost
+    connection: local
+
+    vars:
+      epgs:
+        webapp:
+          ctrt: Webapp_ctrt
+          filter: webapp_filter
+          port: http
+        db:
+          ctrt: DB_ctrt
+          filter: db_filter
+          port: 3306
+
+    tasks:
+    - name: Create ANP
+      aci_anp:
+        name: jenkins_build_test
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Create Context
+      aci_context:
+        name: CTX-01
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Create Bridge Domain
+      aci_bridge_domain:
+        name: BD-01
+        context: CTX-01
+        subnet: 192.168.100.1/24
+        tenant: demo-CI
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Create Filters
+      aci_filter:
+        name: "{{ item }}"
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      with_items:
+        - webapp_filter
+        - db_filter
+
+    - name: Create Filter Entries
+      aci_filter_entry:
+        name: "{{ item.value.ctrt }}"
+        proto: tcp
+        tenant: demo-CI
+        filter: "{{ item.value.filter }}"
+        dest_to_port: "{{ item.value.port }}"
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      with_dict: "{{ epgs }}"
+
+    - name: Create Contracts
+      aci_contract:
+        name: "{{ item }}"
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      with_items:
+        - Webapp_ctrt
+        - DB_ctrt
+
+    - name: Create Subjects
+      aci_contract_subject:
+        name: "subject"
+        contract: "{{ item.value.ctrt }}"
+        filters:  "{{ item.value.filter }}"
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      with_dict: "{{ epgs }}"
+
+    - name: Create Webapp EPG
+      aci_epg:
+        name: Webapp
+        consumed_contracts: DB_ctrt
+        provided_contracts: Webapp_ctrt
+        bridge_domain: BD-01
+        vmm_domain: pod-03-nv-VDS-01
+        anp: jenkins_build_test
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Create DB EPG
+      aci_epg:
+        name: DB
+        provided_contracts: DB_ctrt
+        bridge_domain: BD-01
+        vmm_domain: pod-03-nv-VDS-01
+        anp: jenkins_build_test
+        tenant: demo-CI
+        state: present
+        host: "{{ apic }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+
+    - name: Generate VM name
+      local_action: shell /usr/bin/openssl rand -hex 5
+      with_sequence: count=2
+      register: vm_name
+
+    - name: Create VM WebApp
+      vsphere_guest:
+        vcenter_hostname: "{{ vc_host}}"
+        username: "{{ vc_user }}"
+        password: "{{ vc_password }}"
+        guest: "{{ vm_name.results[0].stdout }}"
+        from_template: yes
+        template_src: nvermand-centos-7-tpl
+        cluster: pod-03
+        resource_pool: "/Resources"
+      async: 600
+      poll: 0
+
+    - name: Create VM DB
+      vsphere_guest:
+        vcenter_hostname: "{{ vc_host}}"
+        username: "{{ vc_user }}"
+        password: "{{ vc_password }}"
+        guest: "{{ vm_name.results[1].stdout }}"
+        from_template: yes
+        template_src: nvermand-centos-7-tpl
+        cluster: pod-03
+        resource_pool: "/Resources"
+
+    - name: Move VM App to ACI portgroup
+      command: /home/nvermand/move_vms.py -s {{ vc_host }} -u {{ vc_user}} -p {{ vc_password }} -m {{ vm_name.results[0].stdout }} -n "demo-CI|jenkins_build_test|Webapp"
+      async: 60
+      poll: 0
+
+    - name: Move VM DB to ACI portgroup
+      command: /home/nvermand/move_vms.py -s {{ vc_host }} -u {{ vc_user}} -p {{ vc_password }} -m {{ vm_name.results[1].stdout }} -n "demo-CI|jenkins_build_test|DB"

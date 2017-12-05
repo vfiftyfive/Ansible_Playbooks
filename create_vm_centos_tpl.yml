@@ -1,0 +1,32 @@
+---
+
+    - name: Generate VM name
+      local_action: shell /usr/bin/openssl rand -hex 5
+      with_sequence: count=2
+      register: vm_name
+
+    - name: Create VM Webapp
+      vsphere_guest:
+        vcenter_hostname: nvermand-vc-01.uktme.cisco.com
+        username: root
+        password: C!5co123
+        guest: "{{ vm_name.results[0].stdout }}"
+        from_template: yes
+        template_src: nvermand-centos-7-tpl
+        cluster: pod-03
+        resource_pool: "/Resources"
+        vm_extra_config:
+          notes: "VM App Created by Ansible"
+
+    - name: Create VM DB
+      vsphere_guest:
+        vcenter_hostname: nvermand-vc-01.uktme.cisco.com
+        username: root
+        password: C!5co123
+        guest: "{{ vm_name.results[1].stdout }}"
+        from_template: yes
+        template_src: nvermand-centos-7-tpl
+        cluster: pod-03
+        resource_pool: "/Resources"
+        vm_extra_config:
+          notes: "VM DB Created by Ansible"

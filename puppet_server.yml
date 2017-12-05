@@ -1,0 +1,16 @@
+---
+
+  - hosts: puppet_server
+    roles:
+      - common
+      - puppet
+
+    environment:
+      https_proxy: http://proxy-ams-1.cisco.com:80
+      http_proxy: http://proxy-ams-1.cisco.com:80
+
+    gather_facts: no
+
+    become: yes
+
+    
