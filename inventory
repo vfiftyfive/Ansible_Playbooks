@@ -1,0 +1,10 @@
+nv-fabric1-apic1
+
+[puppet_server]
+nvermand-puppet-master
+
+[jenkins]
+nvermand-jenkins
+
+[docker]
+docker
