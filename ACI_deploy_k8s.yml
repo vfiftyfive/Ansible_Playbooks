@@ -1,0 +1,20 @@
+---
+
+  - hosts: kubernetes_master_group
+    gather_facts: False
+    roles:
+      - ubuntu_common
+      - docker
+      - kubernetes_common
+      - kubernetes_master
+    environment: "{{ proxy_env }}"
+ 
+  - hosts: kubernetes_worker_group
+    gather_facts: False
+    roles:
+      - ubuntu_common
+      - docker
+      - kubernetes_common
+    environment: "{{ proxy_env }}"
+
+
