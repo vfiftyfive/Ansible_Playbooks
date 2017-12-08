@@ -6,5 +6,12 @@ nvermand-puppet-master
 [jenkins]
 nvermand-jenkins
 
-[docker]
+[docker_group]
 docker
+
+[kubernetes_master_group]
+kubernetes_master
+
+[kubernetes_worker_group]
+kubernetes_worker_1 
+kubernetes_worker_2 
