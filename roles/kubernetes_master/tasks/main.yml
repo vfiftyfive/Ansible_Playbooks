@@ -7,23 +7,77 @@
     with_items:
       - bash-completion
       - python-pip
-    tags: master
+    tags: base
       
   - name: Add bash completion to /etc/profile.d
     lineinfile:
       path: /etc/profile.d/bash_completion.sh
       line: 'source <(kubectl completion bash)'
-    tags: master
- 
+    tags: profile
+
+  - name: Init Kubernetes cluster
+    shell: |
+      kubeadm init \
+      --pod-network-cidr {{ pod_cidr }} \
+      --apiserver-advertise-address {{ master_node_ip }} \
+      --token {{ token }} \
+      --kubernetes-version {{ k8s_version }}
+    tags: init
+
+  - name: Get acc_provision
+    copy: 
+      src: files/acc-provision_1.7.2-42_amd64.deb
+      dest: "{{ ansible_env.HOME }}/acc-provision_1.7.2-42_amd64.deb"
+
   - name: Install acc_provision
-    pip: 
-      name: acc_provision
-    tags: master
-    
+    apt:
+      deb: "{{ ansible_env.HOME }}/acc-provision_1.7.2-42_amd64.deb"
+
   - name: Create acc configuration file
     template:
       src: templates/aci-containers-config.yml.j2
-      dest: /tmp/aci-containers-config.yml
+      dest: "{{ ansible_env.HOME }}/aci-containers-config.yml"
       mode: '0777'
-    tags: master
+    tags: cni
 
+  - name: Create CNI configuration file
+    shell: acc-provision -c {{ ansible_env.HOME }}/aci-containers-config.yml -o {{ ansible_env.HOME }}/aci-containers.yaml -a -u {{ apic_user }} -p {{ apic_pwd }} 
+    tags: cni-push    
+
+  - name: Create Kubernetes config directory
+    file: path=/root/.kube/ state=directory
+    tags: post
+
+  - name: Configure kubectl
+    shell: |
+      mkdir -p {{ ansible_env.HOME }}/.kube
+      sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      sudo chown $(id -u):$(id -g) {{ ansible_env.HOME }}/.kube/config
+    tags: post
+  
+  - name: Apply CNI configuration
+    shell: kubectl apply -f {{ ansible_env.HOME }}/aci-containers.yaml
+    tags: post_cni
+
+  - name: Change VM Network
+    shell: "{{ role_path }}/files/export_govc_env.sh && govc vm.network.change -vm={{ ansible_hostname }} -net={{ kubernetes_trunk_net }} ethernet-1"
+    delegate_to: localhost
+
+  - name: Create Guestbook app folder
+    file: 
+      path: "{{ ansible_env.HOME }}/Guestbook"
+      state: directory
+    tags: app
+
+  - name: Copy Guestbook app manifests
+    copy:
+      src: templates/{{ item }}
+      dest: "{{ ansible_env.HOME }}/Guestbook/{{ item }}"
+    with_items:
+      - frontend-deployment.yaml
+      - frontend-service.yaml
+      - redis-master-deployment.yaml
+      - redis-master-service.yaml
+      - redis-slave-deployment.yaml
+      - redis-slave-service.yaml
+    tags: app

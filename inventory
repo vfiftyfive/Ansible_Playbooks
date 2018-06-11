@@ -9,6 +9,10 @@ nvermand-jenkins
 [docker_group]
 docker
 
+[kubernetes:children]
+kubernetes_master_group
+kubernetes_worker_group
+
 [kubernetes_master_group]
 kubernetes_master
 

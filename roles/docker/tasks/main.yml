@@ -1,7 +1,7 @@
 ---
 
-  - name: Ensure old versions of Docker are not installed.
-    package:
+  - name: Ensure old versions of Docker are not installed
+    apt:
       name: '{{ item }}'
       state: absent
     with_items:
@@ -13,11 +13,12 @@
     apt:
       name: "{{ item }}"
       state: present
+      update_cache: yes
     with_items: 
       - linux-image-extra-{{ ansible_kernel }}
       - linux-image-extra-virtual
 
-  - name: Ensure dependencies are installed.
+  - name: Ensure dependencies are installed
     apt:
       name: "{{ item }}"
       state: present
@@ -26,22 +27,31 @@
       - ca-certificates
       - software-properties-common
 
-  - name: Add Docker apt key.
+  - name: Add Docker apt key
     apt_key:
       url: https://download.docker.com/linux/ubuntu/gpg
       id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
       state: present
+      validate_certs: no
     register: add_repository_key
     ignore_errors: true
 
-  - name: Add Docker repository.
+  - setup:
+    tags: repo
+  - name: Add Docker repository
     apt_repository:
       repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
       state: present
-      update_cache: yes
+      update_cache: no
+      validate_certs: no
+    tags: repo
 
-  - name: Install Docker.
-    package: name=docker-ce state=present
+  - name: Install Docker
+    apt: 
+      name: docker-ce={{ docker_version }}
+      update-cache: yes
+      state: present
+      force: yes
 
   - name: Create docker.service.d
     file: 
@@ -49,15 +59,15 @@
       state: directory
     tags:
       - set_proxy
+    notify: restart docker
   
   - name: Create http-proxy.conf 
     template: src=templates/http-proxy.conf.j2 dest=/etc/systemd/system/docker.service.d/http-proxy.conf
-    notify:
-      - Restart docker
+    notify: restart docker
     tags:
       - set_proxy
 
-  - name: Ensure Docker is started and enabled at boot.
+  - name: Ensure Docker is started and enabled at boot
     service:
       name: docker
       state: started
@@ -85,12 +95,3 @@
       mode: a+x
     tags:
       - compose_x
-
-  - name: restart machine
-    shell: sleep 2 && shutdown -r now "Ansible updates triggered"
-    async: 1
-    poll: 0
-    ignore_errors: true
-
-  - name: Waiting for server to come back
-    local_action: wait_for host={{ inventory_hostname }} state=started delay=30 timeout=60

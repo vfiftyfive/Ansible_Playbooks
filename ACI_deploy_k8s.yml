@@ -1,20 +1,27 @@
 ---
 
+  - hosts: kubernetes
+    pre_tasks:
+      - name: Install python
+        raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      - setup:
+      - name: Run apt-get update
+        shell: apt-get update
+
+    roles:
+      - docker
+      - kubernetes_common
+    environment: "{{ proxy_env }}"
+    gather_facts: no
+
   - hosts: kubernetes_master_group
-    gather_facts: False
     roles:
-      - ubuntu_common
-      - docker
-      - kubernetes_common
       - kubernetes_master
+    gather_facts: False 
     environment: "{{ proxy_env }}"
- 
+
   - hosts: kubernetes_worker_group
-    gather_facts: False
     roles:
-      - ubuntu_common
-      - docker
-      - kubernetes_common
+      - kubernetes_worker
+    gather_facts: False 
     environment: "{{ proxy_env }}"
-
-

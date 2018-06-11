@@ -4,14 +4,16 @@
 aci_config:
   system_id: {{ aci_systemd_id }}             # Every opflex cluster must have a distict ID
   apic_hosts:                   # List of APIC hosts to connect for APIC API
-  {% for apic in aci_apic_hosts %}
-  - {{ apic }}
-  {% endfor %}
+  - {{ aci_apic_host }}
   vmm_domain:                   # Kubernetes VMM domain configuration
     encap_type: {{aci_encap }}           # Encap mode: vxlan or vlan
+    mcast_fabric: {{ aci_fabric_mcast }}
     mcast_range:                # Every opflex VMM must use a distinct range
       start: {{ aci_start_mcast_range }}
       end: {{ aci_end_mcast_range }}
+    nested_inside:
+      type: vmware
+      name: {{ vmware_vmm }}
 
   # The following resources must already exist on the APIC,
   # they are used, but not created by the provisioning tool.
@@ -36,10 +38,6 @@ net_config:
   kubeapi_vlan: {{ node_vlan }}            # The VLAN used by the physdom for nodes
   service_vlan: {{ ext_vlan }}            # The VLAN used by LoadBalancer services
   infra_vlan: {{ infra_vlan }}              # The VLAN used by ACI infra
-
-node_config:
-  uplink_iface: {{ uplink_iface }}                 # The name of the uplink interface to ACI
-  vxlan_uplink_iface: {{ infra_subint }}    # for vxlan, the infra-vlan subinterface
 
 #
 # Configuration for container registry

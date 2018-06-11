@@ -2,6 +2,12 @@
 
   - name: Install Python 2
     raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+    environment: "{{ proxy_env }}"
+
+  - name: Disable Proxy Pipelining
+    copy:
+      src: "templates/fixbadproxy"
+      dest: /etc/apt/apt.conf.d/99fixbadproxy
 
   - name: Check if SELinux installed
     shell: dpkg-query -s selinux | grep 'install ok installed'
@@ -38,8 +44,24 @@
       - unzip
       - wget
       - git
+      - curl
+      - open-vm-tools
+      - vlan
+      - ntp
     tags:
       - configuration
+
+  - name: Configure NTP
+    template:
+      src: ntp.conf.j2
+      dest: /etc/ntp.conf
+#    notify: restart ntp
+
+  - name: Change DHCP client timeout value
+    lineinfile:
+      path: /etc/dhcp/dhclient.conf
+      regexp: '^timeout'
+      line: 'timeout 15;'
 
   - name: restart machine
     shell: sleep 2 && shutdown -r now "Ansible updates triggered"
@@ -49,7 +71,8 @@
     tags:
       - configuration
 
-  - name: Waiting for server to come back
-    local_action: wait_for host={{ inventory_hostname }} state=started delay=30 timeout=60
-    tags:
-      - configuration
+#  - name: Waiting for server to come back
+#    local_action: wait_for host={{ inventory_hostname }} state=started delay=30 timeout=60
+#    tags:
+#      - configuration
+#
