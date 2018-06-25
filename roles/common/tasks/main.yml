@@ -2,66 +2,20 @@
 
   - name: Install Python 2
     raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
-    environment: "{{ proxy_env }}"
 
-  - name: Disable Proxy Pipelining
-    copy:
-      src: "templates/fixbadproxy"
-      dest: /etc/apt/apt.conf.d/99fixbadproxy
+  - name: Common tasks for Ubuntu
+    include: common_ubuntu.yml
+    when: ansible_distribution == "Ubuntu"
 
-  - name: Check if SELinux installed
-    shell: dpkg-query -s selinux | grep 'install ok installed'
-    register: dpkg_check
-    ignore_errors: yes
-    tags:
-      - configuration
-
-  - name: Disable SELinux
-    selinux: state=disabled
-    when: dpkg_check == 0
-    tags:
-      - configuration
-
-  - name: Install libselinux-python 
-    apt: name=python-selinux state=present
-
-  - name: Check if Firewalld is installed
-    shell: dpkg-query -s firewalld | grep 'install ok installed'
-    register: dpkg_check
-    ignore_errors: yes
-    tags:
-      - configuration
-
-  - name: Disable Firewalld
-    service: name=firewalld enabled=no state=stopped
-    when: dpkg_check == 0
-    tags:
-      - configuration
-
-  - name: Install common packages
-    apt: name={{ item }} state=present
-    with_items:
-      - unzip
-      - wget
-      - git
-      - curl
-      - open-vm-tools
-      - vlan
-      - ntp
-    tags:
-      - configuration
+  - name: Common tasks for Centos
+    include: common_centos.yml
+    when: ansible_distribution == "CentOS"
 
   - name: Configure NTP
     template:
       src: ntp.conf.j2
       dest: /etc/ntp.conf
 #    notify: restart ntp
-
-  - name: Change DHCP client timeout value
-    lineinfile:
-      path: /etc/dhcp/dhclient.conf
-      regexp: '^timeout'
-      line: 'timeout 15;'
 
   - name: restart machine
     shell: sleep 2 && shutdown -r now "Ansible updates triggered"

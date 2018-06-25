@@ -22,6 +22,6 @@ auto {{ uplink_iface }}.{{ infra_vlan }}
 iface {{ uplink_iface }}.{{ infra_vlan }} inet dhcp
   mtu 1600
   vlan-raw-device {{ uplink_iface }}
-  up ip route add {{ fabric_mc_addr }} dev {{ uplink_iface }}.{{ infra_vlan }}
+  up ip route add {{ aci_fabric_mcast }} dev {{ uplink_iface }}.{{ infra_vlan }}
 
 
